@@ -24,14 +24,14 @@ if (!process.env.SUPABASE_URL) {
     process.exit(1);
 }
 
-if (!process.env.SUPABASE_ANON_KEY) {
+if (!process.env.SUPABASE_SECRET_KEY) {
     console.error("ERROR: SUPABASE_ANON_KEY is missing.");
     process.exit(1);
 }
 
 const supabase = createClient(
     process.env.SUPABASE_URL,
-    process.env.SUPABASE_ANON_KEY
+    process.env.SUPABASE_SECRET_KEY
 );
 
 app.use(cors());
