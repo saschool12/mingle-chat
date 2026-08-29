@@ -424,4 +424,12 @@ app.get("/api/health", (req, res) => {
    SERVER
 ========================= */
 
-module.exports = app;
+
+server.listen(PORT, () => {
+    console.log("");
+    console.log("================================");
+    console.log(" MINGLE SERVER");
+    console.log("================================");
+    console.log(`Running on port ${PORT}`);
+    console.log("");
+});
