@@ -4,38 +4,38 @@ const WebSocket = require("ws");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const cors = require("cors");
-const fs = require("fs");
-const path = require("path");
+const { createClient } = require("@supabase/supabase-js");
 
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
 const PORT = process.env.PORT || 3000;
-const JWT_SECRET = process.env.JWT_SECRET || "CHANGE_ME_IN_PRODUCTION";
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+    console.error("ERROR: JWT_SECRET is missing.");
+    process.exit(1);
+}
+
+if (!process.env.SUPABASE_URL) {
+    console.error("ERROR: SUPABASE_URL is missing.");
+    process.exit(1);
+}
+
+if (!process.env.SUPABASE_SECRET_KEY) {
+    console.error("ERROR: SUPABASE_SECRET_KEY is missing.");
+    process.exit(1);
+}
+
+const supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SECRET_KEY
+);
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, "public")));
-
-const dataDir = path.join(__dirname, "data");
-const usersFile = path.join(dataDir, "users.json");
-
-if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
-}
-
-if (!fs.existsSync(usersFile)) {
-    fs.writeFileSync(usersFile, "[]");
-}
-
-function getUsers() {
-    return JSON.parse(fs.readFileSync(usersFile, "utf8"));
-}
-
-function saveUsers(users) {
-    fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
-}
+app.use(express.static("public"));
 
 /* =========================
    SIGN UP
@@ -43,8 +43,11 @@ function saveUsers(users) {
 
 app.post("/api/signup", async (req, res) => {
     try {
-        const username = String(req.body.username || "").trim();
-        const password = String(req.body.password || "");
+        const username =
+            String(req.body.username || "").trim();
+
+        const password =
+            String(req.body.password || "");
 
         if (username.length < 3 || username.length > 20) {
             return res.status(400).json({
@@ -58,35 +61,54 @@ app.post("/api/signup", async (req, res) => {
             });
         }
 
-        const users = getUsers();
+        const { data: existing, error: findError } =
+            await supabase
+                .from("users")
+                .select("id")
+                .ilike("username", username)
+                .maybeSingle();
 
-        const exists = users.some(
-            user => user.username.toLowerCase() === username.toLowerCase()
-        );
+        if (findError) {
+            console.error(findError);
 
-        if (exists) {
+            return res.status(500).json({
+                error: "Database error."
+            });
+        }
+
+        if (existing) {
             return res.status(409).json({
                 error: "Username already exists."
             });
         }
 
-        const passwordHash = await bcrypt.hash(password, 12);
+        const passwordHash =
+            await bcrypt.hash(password, 12);
 
-        users.push({
-            username,
-            password: passwordHash,
-            createdAt: Date.now()
-        });
+        const { error: insertError } =
+            await supabase
+                .from("users")
+                .insert({
+                    username: username,
+                    password_hash: passwordHash
+                });
 
-        saveUsers(users);
+        if (insertError) {
+            console.error(insertError);
 
-        const token = jwt.sign(
-            { username },
-            JWT_SECRET,
-            { expiresIn: "7d" }
-        );
+            return res.status(500).json({
+                error: "Could not create account."
+            });
+        }
 
-        res.json({
+        const token =
+            jwt.sign(
+                { username },
+                JWT_SECRET,
+                { expiresIn: "7d" }
+            );
+
+        return res.json({
             success: true,
             token,
             username
@@ -95,7 +117,7 @@ app.post("/api/signup", async (req, res) => {
     } catch (error) {
         console.error(error);
 
-        res.status(500).json({
+        return res.status(500).json({
             error: "Server error."
         });
     }
@@ -107,14 +129,26 @@ app.post("/api/signup", async (req, res) => {
 
 app.post("/api/login", async (req, res) => {
     try {
-        const username = String(req.body.username || "").trim();
-        const password = String(req.body.password || "");
+        const username =
+            String(req.body.username || "").trim();
 
-        const users = getUsers();
+        const password =
+            String(req.body.password || "");
 
-        const user = users.find(
-            user => user.username.toLowerCase() === username.toLowerCase()
-        );
+        const { data: user, error } =
+            await supabase
+                .from("users")
+                .select("username,password_hash")
+                .ilike("username", username)
+                .maybeSingle();
+
+        if (error) {
+            console.error(error);
+
+            return res.status(500).json({
+                error: "Database error."
+            });
+        }
 
         if (!user) {
             return res.status(401).json({
@@ -122,10 +156,11 @@ app.post("/api/login", async (req, res) => {
             });
         }
 
-        const valid = await bcrypt.compare(
-            password,
-            user.password
-        );
+        const valid =
+            await bcrypt.compare(
+                password,
+                user.password_hash
+            );
 
         if (!valid) {
             return res.status(401).json({
@@ -133,13 +168,14 @@ app.post("/api/login", async (req, res) => {
             });
         }
 
-        const token = jwt.sign(
-            { username: user.username },
-            JWT_SECRET,
-            { expiresIn: "7d" }
-        );
+        const token =
+            jwt.sign(
+                { username: user.username },
+                JWT_SECRET,
+                { expiresIn: "7d" }
+            );
 
-        res.json({
+        return res.json({
             success: true,
             token,
             username: user.username
@@ -148,7 +184,7 @@ app.post("/api/login", async (req, res) => {
     } catch (error) {
         console.error(error);
 
-        res.status(500).json({
+        return res.status(500).json({
             error: "Server error."
         });
     }
@@ -162,7 +198,10 @@ const waiting = [];
 const clients = new Set();
 
 function send(ws, data) {
-    if (ws && ws.readyState === WebSocket.OPEN) {
+    if (
+        ws &&
+        ws.readyState === WebSocket.OPEN
+    ) {
         ws.send(JSON.stringify(data));
     }
 }
@@ -176,6 +215,7 @@ function removeWaiting(ws) {
 }
 
 function leavePartner(ws) {
+
     const partner = ws.partner;
 
     if (!partner) return;
@@ -189,9 +229,11 @@ function leavePartner(ws) {
 }
 
 function findPartner(ws) {
+
     removeWaiting(ws);
 
     while (waiting.length > 0) {
+
         const other = waiting.shift();
 
         if (
@@ -199,6 +241,7 @@ function findPartner(ws) {
             other.readyState === WebSocket.OPEN &&
             !other.partner
         ) {
+
             ws.partner = other;
             other.partner = ws;
 
@@ -232,24 +275,30 @@ function findPartner(ws) {
 wss.on("connection", (ws, req) => {
 
     try {
-        const url = new URL(
-            req.url,
-            "http://localhost"
-        );
 
-        const token = url.searchParams.get("token");
+        const url =
+            new URL(
+                req.url,
+                "http://localhost"
+            );
+
+        const token =
+            url.searchParams.get("token");
 
         if (!token) {
             ws.close();
             return;
         }
 
-        const decoded = jwt.verify(
-            token,
-            JWT_SECRET
-        );
+        const decoded =
+            jwt.verify(
+                token,
+                JWT_SECRET
+            );
 
-        ws.username = decoded.username;
+        ws.username =
+            decoded.username;
+
         ws.partner = null;
 
         clients.add(ws);
@@ -260,8 +309,13 @@ wss.on("connection", (ws, req) => {
         });
 
     } catch (error) {
-        console.log("WebSocket authentication failed.");
+
+        console.log(
+            "WebSocket authentication failed."
+        );
+
         ws.close();
+
         return;
     }
 
@@ -270,36 +324,38 @@ wss.on("connection", (ws, req) => {
         let data;
 
         try {
-            data = JSON.parse(raw.toString());
+            data =
+                JSON.parse(
+                    raw.toString()
+                );
         } catch {
             return;
         }
 
-        /* FIND */
-
         if (data.type === "find") {
+
             leavePartner(ws);
             findPartner(ws);
+
             return;
         }
-
-        /* NEXT */
 
         if (data.type === "next") {
+
             leavePartner(ws);
             findPartner(ws);
+
             return;
         }
-
-        /* CHAT */
 
         if (data.type === "chat") {
 
             if (!ws.partner) return;
 
-            const message = String(
-                data.message || ""
-            ).slice(0, 1000);
+            const message =
+                String(
+                    data.message || ""
+                ).slice(0, 1000);
 
             if (!message.trim()) return;
 
@@ -312,8 +368,6 @@ wss.on("connection", (ws, req) => {
             return;
         }
 
-        /* WEBRTC SIGNAL */
-
         if (data.type === "signal") {
 
             if (!ws.partner) return;
@@ -325,8 +379,6 @@ wss.on("connection", (ws, req) => {
 
             return;
         }
-
-        /* REPORT */
 
         if (data.type === "report") {
 
@@ -356,17 +408,23 @@ wss.on("connection", (ws, req) => {
 });
 
 /* =========================
-   HEALTH CHECK
+   HEALTH
 ========================= */
 
 app.get("/api/health", (req, res) => {
+
     res.json({
         online: true,
         users: clients.size
     });
 });
 
+/* =========================
+   SERVER
+========================= */
+
 server.listen(PORT, () => {
+
     console.log("");
     console.log("================================");
     console.log(" MINGLE SERVER");
