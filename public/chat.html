@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+>
+
+<title>Mingle Chat</title>
+
+<link rel="stylesheet" href="style.css">
+
+</head>
+
+<body class="video-page">
+
+<div class="fullscreen-video">
+
+    <video
+        id="remoteVideo"
+        autoplay
+        playsinline
+    ></video>
+
+    <div class="stranger">
+        <span class="dot"></span>
+        <span id="partnerName">
+            Stranger
+        </span>
+    </div>
+
+</div>
+
+<div class="my-video">
+
+    <video
+        id="localVideo"
+        autoplay
+        muted
+        playsinline
+    ></video>
+
+</div>
+
+<header>
+
+    <div class="logo">
+        Mingle<span>+</span>
+    </div>
+
+    <div>
+        <span id="username"></span>
+
+        <button id="logout">
+            Logout
+        </button>
+    </div>
+
+</header>
+
+<div class="status">
+    <span class="dot"></span>
+    <span id="status">
+        Connecting...
+    </span>
+</div>
+
+<div class="chat">
+
+    <div id="messages"></div>
+
+    <form id="messageForm">
+
+        <input
+            id="message"
+            placeholder="Type a message..."
+            autocomplete="off"
+        >
+
+        <button>
+            ➤
+        </button>
+
+    </form>
+
+</div>
+
+<div class="controls">
+
+    <button id="mic">
+        🎤
+    </button>
+
+    <button id="camera">
+        📷
+    </button>
+
+    <button id="next">
+        Next →
+    </button>
+
+    <button id="report">
+        🚩
+    </button>
+
+</div>
+
+<script src="app.js"></script>
+
+</body>
+</html>

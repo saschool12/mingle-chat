@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mingle+</title>
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="auth">
+
+    <div class="logo">
+        Mingle<span>+</span>
+    </div>
+
+    <p class="sub">
+        Meet someone new.
+    </p>
+
+    <div class="tabs">
+        <button id="loginTab" class="active">
+            Login
+        </button>
+
+        <button id="signupTab">
+            Sign Up
+        </button>
+    </div>
+
+    <form id="form">
+
+        <input
+            id="username"
+            placeholder="Username"
+            autocomplete="username"
+            required
+        >
+
+        <input
+            id="password"
+            type="password"
+            placeholder="Password"
+            autocomplete="current-password"
+            required
+        >
+
+        <button class="primary">
+            Login
+        </button>
+
+    </form>
+
+    <div id="error"></div>
+
+</div>
+
+<script>
+
+const API_URL = localStorage.getItem("API_URL") || "";
+
+let mode = "login";
+
+const form = document.getElementById("form");
+const username = document.getElementById("username");
+const password = document.getElementById("password");
+const error = document.getElementById("error");
+const submit = document.querySelector(".primary");
+
+document.getElementById("loginTab").onclick = () => {
+
+    mode = "login";
+
+    document.getElementById("loginTab")
+        .classList.add("active");
+
+    document.getElementById("signupTab")
+        .classList.remove("active");
+
+    submit.textContent = "Login";
+};
+
+document.getElementById("signupTab").onclick = () => {
+
+    mode = "signup";
+
+    document.getElementById("signupTab")
+        .classList.add("active");
+
+    document.getElementById("loginTab")
+        .classList.remove("active");
+
+    submit.textContent = "Create Account";
+};
+
+form.onsubmit = async event => {
+
+    event.preventDefault();
+
+    error.textContent = "";
+
+    try {
+
+        const response = await fetch(
+            API_URL + "/api/" + mode,
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+                    username: username.value.trim(),
+                    password: password.value
+                })
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(
+                data.error || "Request failed."
+            );
+        }
+
+        localStorage.setItem(
+            "token",
+            data.token
+        );
+
+        localStorage.setItem(
+            "username",
+            data.username
+        );
+
+        location.href = "/chat.html";
+
+    } catch (err) {
+
+        error.textContent =
+            err.message ||
+            "Unable to connect to server.";
+
+    }
+};
+
+</script>
+
+</body>
+</html>
