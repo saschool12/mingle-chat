@@ -1,3 +1,4 @@
+const path = require("path");
 const express = require("express");
 const http = require("http");
 const WebSocket = require("ws");
@@ -35,7 +36,7 @@ const supabase = createClient(
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static("public"));
+app.use(express.static(path.join(__dirname, "public")));
 
 /* =========================
    SIGN UP
@@ -93,13 +94,13 @@ app.post("/api/signup", async (req, res) => {
                     password_hash: passwordHash
                 });
 
-        if (insertError) {
-            console.error(insertError);
+       if (insertError) {
+    console.error("SUPABASE INSERT ERROR:", insertError);
 
-            return res.status(500).json({
-                error: "Could not create account."
-            });
-        }
+    return res.status(500).json({
+        error: insertError.message
+    });
+}
 
         const token =
             jwt.sign(
@@ -423,12 +424,4 @@ app.get("/api/health", (req, res) => {
    SERVER
 ========================= */
 
-server.listen(PORT, () => {
-
-    console.log("");
-    console.log("================================");
-    console.log(" MINGLE SERVER");
-    console.log("================================");
-    console.log(`Running on port ${PORT}`);
-    console.log("");
-});
+module.exports = app;
