@@ -1,153 +1,261 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>JhonnyMingle</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>John Mingle — Meet Someone New</title>
+  <meta name="description" content="John Mingle — random video and text chat. Meet someone new.">
+  <link rel="stylesheet" href="style.css">
 </head>
 
-<body>
+<body class="landing-page">
 
-<div class="auth">
+  <nav class="navbar">
+    <a href="/" class="brand">
+      <span class="brand-icon">J</span>
+      <span>John <b>Mingle</b></span>
+    </a>
 
-    <div class="logo">
-        JhonnyMingle
+    <div class="nav-status">
+      <span class="status-dot"></span>
+      <span id="onlineCount">Online now</span>
     </div>
+  </nav>
 
-    <p class="sub">
-        Meet someone new.
-    </p>
+  <main class="landing-container">
 
-    <div class="tabs">
-        <button id="loginTab" class="active">
-            Login
+    <section class="hero">
+      <div class="hero-badge">
+        ✨ Random conversations. Real people.
+      </div>
+
+      <h1>
+        Meet someone
+        <span>new.</span>
+      </h1>
+
+      <p>
+        Talk, laugh, and make new connections with people around the world.
+        Your next conversation is only one click away.
+      </p>
+
+      <div class="hero-actions">
+        <button class="primary-btn" onclick="showAuth('signup')">
+          Start Mingling
+          <span>→</span>
         </button>
 
-        <button id="signupTab">
-            Sign Up
+        <button class="secondary-btn" onclick="showAuth('login')">
+          I already have an account
         </button>
-    </div>
+      </div>
 
-    <form id="form">
+      <div class="features">
+        <div class="feature">
+          <div class="feature-icon">🎥</div>
+          <div>
+            <strong>Live Video</strong>
+            <small>1-on-1 conversations</small>
+          </div>
+        </div>
 
-        <input
+        <div class="feature">
+          <div class="feature-icon">💬</div>
+          <div>
+            <strong>Instant Chat</strong>
+            <small>Talk in real time</small>
+          </div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-icon">🌎</div>
+          <div>
+            <strong>Meet People</strong>
+            <small>From anywhere</small>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="auth-card" id="authCard">
+
+      <div class="auth-header">
+        <div class="auth-logo">J</div>
+        <h2 id="authTitle">Create your account</h2>
+        <p id="authSubtitle">Join John Mingle and start meeting people.</p>
+      </div>
+
+      <div class="auth-tabs">
+        <button id="signupTab" class="active" onclick="showAuth('signup')">
+          Sign up
+        </button>
+
+        <button id="loginTab" onclick="showAuth('login')">
+          Log in
+        </button>
+      </div>
+
+      <form id="authForm">
+
+        <div id="usernameGroup" class="input-group">
+          <label>Username</label>
+          <input
             id="username"
-            placeholder="Username"
+            type="text"
+            placeholder="Choose a username"
             autocomplete="username"
-            required
-        >
+          >
+        </div>
 
-        <input
+        <div class="input-group">
+          <label>Password</label>
+          <input
             id="password"
             type="password"
-            placeholder="Password"
+            placeholder="Enter your password"
             autocomplete="current-password"
             required
-        >
+          >
+        </div>
 
-        <button class="primary">
-            Login
+        <div id="confirmGroup" class="input-group">
+          <label>Confirm password</label>
+          <input
+            id="confirmPassword"
+            type="password"
+            placeholder="Repeat your password"
+            autocomplete="new-password"
+          >
+        </div>
+
+        <div id="authMessage" class="auth-message"></div>
+
+        <button type="submit" class="auth-submit" id="authSubmit">
+          Create account
         </button>
 
-    </form>
+      </form>
 
-    <div id="error"></div>
+      <p class="auth-footer">
+        By continuing, you agree to use John Mingle respectfully.
+      </p>
 
-</div>
+    </section>
+
+  </main>
+
+  <footer>
+    <span>© 2026 John Mingle</span>
+    <span>Connect • Chat • Mingle</span>
+  </footer>
 
 <script>
+let mode = "signup";
 
-const API_URL = localStorage.getItem("API_URL") || "";
-
-let mode = "login";
-
-const form = document.getElementById("form");
+const authForm = document.getElementById("authForm");
+const usernameGroup = document.getElementById("usernameGroup");
+const confirmGroup = document.getElementById("confirmGroup");
 const username = document.getElementById("username");
 const password = document.getElementById("password");
-const error = document.getElementById("error");
-const submit = document.querySelector(".primary");
+const confirmPassword = document.getElementById("confirmPassword");
+const authMessage = document.getElementById("authMessage");
+const authSubmit = document.getElementById("authSubmit");
+const authTitle = document.getElementById("authTitle");
+const authSubtitle = document.getElementById("authSubtitle");
+const signupTab = document.getElementById("signupTab");
+const loginTab = document.getElementById("loginTab");
 
-document.getElementById("loginTab").onclick = () => {
+function showAuth(type) {
+  mode = type;
 
-    mode = "login";
+  document.getElementById("authCard").scrollIntoView({
+    behavior: "smooth",
+    block: "center"
+  });
 
-    document.getElementById("loginTab")
-        .classList.add("active");
+  authMessage.textContent = "";
 
-    document.getElementById("signupTab")
-        .classList.remove("active");
+  if (type === "login") {
+    usernameGroup.style.display = "block";
+    confirmGroup.style.display = "none";
 
-    submit.textContent = "Login";
-};
+    authTitle.textContent = "Welcome back";
+    authSubtitle.textContent = "Log in and continue mingling.";
+    authSubmit.textContent = "Log in";
 
-document.getElementById("signupTab").onclick = () => {
+    signupTab.classList.remove("active");
+    loginTab.classList.add("active");
 
-    mode = "signup";
+    username.placeholder = "Your username";
+  } else {
+    usernameGroup.style.display = "block";
+    confirmGroup.style.display = "block";
 
-    document.getElementById("signupTab")
-        .classList.add("active");
+    authTitle.textContent = "Create your account";
+    authSubtitle.textContent = "Join John Mingle and start meeting people.";
+    authSubmit.textContent = "Create account";
 
-    document.getElementById("loginTab")
-        .classList.remove("active");
+    loginTab.classList.remove("active");
+    signupTab.classList.add("active");
 
-    submit.textContent = "Create Account";
-};
+    username.placeholder = "Choose a username";
+  }
+}
 
-form.onsubmit = async event => {
+authForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
 
-    event.preventDefault();
+  const user = username.value.trim();
+  const pass = password.value;
 
-    error.textContent = "";
+  if (!user || !pass) {
+    authMessage.textContent = "Please fill in all required fields.";
+    return;
+  }
 
-    try {
+  if (mode === "signup" && pass !== confirmPassword.value) {
+    authMessage.textContent = "Passwords do not match.";
+    return;
+  }
 
-        const response = await fetch(
-            API_URL + "/api/" + mode,
-            {
-                method: "POST",
+  authSubmit.disabled = true;
+  authSubmit.textContent = mode === "login" ? "Logging in..." : "Creating account...";
 
-                headers: {
-                    "Content-Type": "application/json"
-                },
+  try {
+    const response = await fetch(
+      mode === "login" ? "/api/login" : "/api/signup",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          username: user,
+          password: pass
+        })
+      }
+    );
 
-                body: JSON.stringify({
-                    username: username.value.trim(),
-                    password: password.value
-                })
-            }
-        );
+    const data = await response.json();
 
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(
-                data.error || "Request failed."
-            );
-        }
-
-        localStorage.setItem(
-            "token",
-            data.token
-        );
-
-        localStorage.setItem(
-            "username",
-            data.username
-        );
-
-        location.href = "/chat.html";
-
-    } catch (err) {
-
-        error.textContent =
-            err.message ||
-            "Unable to connect to server.";
-
+    if (!response.ok) {
+      throw new Error(data.error || "Something went wrong.");
     }
-};
 
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("username", data.username || user);
+
+    window.location.href = "/chat.html";
+
+  } catch (error) {
+    authMessage.textContent = error.message;
+    authSubmit.disabled = false;
+    authSubmit.textContent =
+      mode === "login" ? "Log in" : "Create account";
+  }
+});
+
+showAuth("signup");
 </script>
 
 </body>
