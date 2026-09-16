@@ -368,3 +368,362 @@ footer {
     text-align: center;
   }
 }
+
+/* =========================================
+   JOHN MINGLE — VIDEO CHAT
+   ========================================= */
+
+.video-page {
+  overflow: hidden;
+  height: 100vh;
+  width: 100%;
+  background: #050509;
+  color: white;
+}
+
+.video-page .fullscreen-video {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: #050509;
+  z-index: 1;
+}
+
+.video-page #remoteVideo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #101016;
+}
+
+.video-page .stranger {
+  position: absolute;
+  top: 22px;
+  left: 22px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 15px;
+  border-radius: 30px;
+  background: rgba(10,10,16,.65);
+  border: 1px solid rgba(255,255,255,.12);
+  backdrop-filter: blur(15px);
+  font-size: 14px;
+  font-weight: 700;
+  z-index: 5;
+}
+
+.video-page .dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #35d98b;
+  box-shadow: 0 0 12px #35d98b;
+}
+
+.video-page .my-video {
+  position: fixed;
+  right: 22px;
+  top: 22px;
+  width: 210px;
+  height: 150px;
+  overflow: hidden;
+  border-radius: 18px;
+  border: 2px solid rgba(255,255,255,.2);
+  background: #111118;
+  box-shadow: 0 15px 40px rgba(0,0,0,.5);
+  z-index: 10;
+}
+
+.video-page #localVideo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+}
+
+.video-page header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 70px;
+  padding: 0 25px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(
+    to bottom,
+    rgba(0,0,0,.65),
+    transparent
+  );
+  z-index: 8;
+  pointer-events: none;
+}
+
+.video-page header > * {
+  pointer-events: auto;
+}
+
+.video-page .logo {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -.5px;
+}
+
+.video-page .logo::first-letter {
+  color: #a78bfa;
+}
+
+.video-page header > div:last-child {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.video-page #username {
+  color: #ddd8e7;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.video-page #logout {
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(15,15,22,.65);
+  color: white;
+  padding: 9px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+}
+
+.video-page #logout:hover {
+  background: rgba(255,255,255,.12);
+}
+
+.video-page .status {
+  position: fixed;
+  top: 82px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 30px;
+  background: rgba(10,10,16,.65);
+  border: 1px solid rgba(255,255,255,.1);
+  backdrop-filter: blur(14px);
+  color: #d5d1dc;
+  font-size: 12px;
+  z-index: 9;
+}
+
+.video-page .chat {
+  position: fixed;
+  right: 22px;
+  bottom: 105px;
+  width: min(340px, calc(100vw - 44px));
+  height: 330px;
+  display: flex;
+  flex-direction: column;
+  background: rgba(10,9,16,.78);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 20px;
+  overflow: hidden;
+  backdrop-filter: blur(20px);
+  box-shadow: 0 20px 60px rgba(0,0,0,.45);
+  z-index: 12;
+}
+
+.video-page #messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.video-page #messages:empty::before {
+  content: "Your conversation will appear here...";
+  color: #777180;
+  font-size: 12px;
+  text-align: center;
+  margin: auto;
+}
+
+.video-page #messageForm {
+  display: flex;
+  gap: 8px;
+  padding: 10px;
+  border-top: 1px solid rgba(255,255,255,.08);
+  background: rgba(0,0,0,.2);
+}
+
+.video-page #message {
+  min-width: 0;
+  flex: 1;
+  border: 1px solid rgba(255,255,255,.1);
+  background: rgba(255,255,255,.06);
+  color: white;
+  outline: none;
+  border-radius: 11px;
+  padding: 11px 12px;
+  font-size: 13px;
+}
+
+.video-page #message:focus {
+  border-color: #8b5cf6;
+}
+
+.video-page #message::placeholder {
+  color: #777180;
+}
+
+.video-page #messageForm button {
+  width: 42px;
+  border: 0;
+  border-radius: 11px;
+  background: linear-gradient(135deg,#8b5cf6,#6366f1);
+  color: white;
+  font-size: 17px;
+}
+
+.video-page .controls {
+  position: fixed;
+  left: 50%;
+  bottom: 25px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 20px;
+  background: rgba(10,9,16,.78);
+  border: 1px solid rgba(255,255,255,.1);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 15px 50px rgba(0,0,0,.5);
+  z-index: 20;
+}
+
+.video-page .controls button {
+  min-width: 48px;
+  height: 45px;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 13px;
+  background: rgba(255,255,255,.07);
+  color: white;
+  font-size: 17px;
+  cursor: pointer;
+  transition: .18s ease;
+}
+
+.video-page .controls button:hover {
+  transform: translateY(-2px);
+  background: rgba(255,255,255,.13);
+}
+
+.video-page #next {
+  padding: 0 20px;
+  font-size: 13px;
+  font-weight: 800;
+  background: linear-gradient(135deg,#8b5cf6,#6366f1);
+  border: 0;
+}
+
+.video-page #report {
+  color: #ff8799;
+}
+
+@media (max-width: 700px) {
+
+  .video-page .my-video {
+    top: 72px;
+    right: 12px;
+    width: 125px;
+    height: 170px;
+    border-radius: 14px;
+  }
+
+  .video-page header {
+    padding: 0 14px;
+    height: 60px;
+  }
+
+  .video-page .logo {
+    font-size: 17px;
+  }
+
+  .video-page #username {
+    display: none;
+  }
+
+  .video-page .stranger {
+    top: 15px;
+    left: 14px;
+    font-size: 12px;
+  }
+
+  .video-page .status {
+    top: 65px;
+    font-size: 11px;
+  }
+
+  .video-page .chat {
+    left: 12px;
+    right: 12px;
+    bottom: 90px;
+    width: auto;
+    height: 220px;
+    border-radius: 16px;
+  }
+
+  .video-page .controls {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    transform: none;
+    justify-content: center;
+    padding: 7px;
+    border-radius: 16px;
+  }
+
+  .video-page .controls button {
+    height: 43px;
+    min-width: 43px;
+  }
+
+  .video-page #next {
+    flex: 1;
+    max-width: 150px;
+  }
+}
+
+@media (max-width: 400px) {
+
+  .video-page .chat {
+    height: 190px;
+  }
+
+  .video-page .my-video {
+    width: 105px;
+    height: 140px;
+  }
+
+  .video-page .controls {
+    gap: 5px;
+  }
+
+  .video-page .controls button {
+    min-width: 39px;
+    height: 40px;
+    font-size: 15px;
+  }
+
+  .video-page #next {
+    padding: 0 10px;
+  }
+}
+
