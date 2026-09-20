@@ -301,7 +301,9 @@ app.post("/api/signup", async (req, res) => {
 
             return res.status(500).json({
                 error:
-                    "Could not send verification email."
+                    "Could not send verification email.",
+                details:
+                    mailError?.message || String(mailError)
             });
         }
 
