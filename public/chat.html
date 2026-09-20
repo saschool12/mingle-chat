@@ -2,114 +2,219 @@
 <html lang="en">
 
 <head>
+    <meta charset="UTF-8">
 
-<meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1, viewport-fit=cover"
+    >
 
-<meta
-    name="viewport"
-    content="width=device-width,initial-scale=1"
->
+    <title>John Mingle — Random Video</title>
 
-<title>John Mingle</title>
-
-<link rel="stylesheet" href="style.css">
-
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body class="video-page">
 
-<div class="fullscreen-video">
+    <!-- TOP BAR -->
+    <header class="video-header">
 
-    <video
-        id="remoteVideo"
-        autoplay
-        playsinline
-    ></video>
+        <div class="video-brand">
+            <div class="video-brand-icon">J</div>
 
-    <div class="stranger">
-        <span class="dot"></span>
-        <span id="partnerName">
-            Stranger
-        </span>
-    </div>
+            <div>
+                <div class="video-brand-name">
+                    John Mingle
+                </div>
 
-</div>
+                <div class="video-brand-sub">
+                    Random Video
+                </div>
+            </div>
+        </div>
 
-<div class="my-video">
+        <div class="video-user">
 
-    <video
-        id="localVideo"
-        autoplay
-        muted
-        playsinline
-    ></video>
+            <span id="username"></span>
 
-</div>
+            <button id="logout" type="button">
+                Logout
+            </button>
 
-<header>
+        </div>
 
-    <div class="logo">
-        John Mingle
-    </div>
+    </header>
 
-    <div>
-        <span id="username"></span>
 
-        <button id="logout">
-            Logout
-        </button>
-    </div>
+    <!-- MAIN VIDEO AREA -->
+    <main class="video-layout">
 
-</header>
+        <section class="video-stage">
 
-<div class="status">
-    <span class="dot"></span>
-    <span id="status">
-        Connecting...
-    </span>
-</div>
+            <div class="video-card">
 
-<div class="chat">
+                <video
+                    id="remoteVideo"
+                    autoplay
+                    playsinline
+                ></video>
 
-    <div id="messages"></div>
+                <!-- Stranger info -->
+                <div class="stranger-badge">
 
-    <form id="messageForm">
+                    <span class="online-dot"></span>
 
-        <input
-            id="message"
-            placeholder="Type a message..."
-            autocomplete="off"
-        >
+                    <div>
+                        <strong id="partnerName">
+                            Stranger
+                        </strong>
 
-        <button>
-            ➤
-        </button>
+                        <small>
+                            Random match
+                        </small>
+                    </div>
 
-    </form>
+                </div>
 
-</div>
+                <!-- Connection status -->
+                <div class="connection-status">
 
-<div class="controls">
+                    <span class="status-dot"></span>
 
-    <button id="mic">
-        🎤
-    </button>
+                    <span id="status">
+                        Connecting...
+                    </span>
 
-    <button id="camera">
-        📷
-    </button>
+                </div>
 
-    <button id="next">
-        Next →
-    </button>
+                <!-- Your camera -->
+                <div class="my-video">
 
-    <button id="report">
-        🚩
-    </button>
+                    <video
+                        id="localVideo"
+                        autoplay
+                        muted
+                        playsinline
+                    ></video>
 
-</div>
+                    <div class="you-label">
+                        You
+                    </div>
 
-<script src="app.js"></script>
+                </div>
+
+                <!-- Empty video state -->
+                <div class="video-placeholder">
+
+                    <div class="placeholder-icon">
+                        ✦
+                    </div>
+
+                    <strong>
+                        Finding someone...
+                    </strong>
+
+                    <span>
+                        Your next conversation is loading
+                    </span>
+
+                </div>
+
+            </div>
+
+            <!-- CONTROLS -->
+            <div class="controls">
+
+                <button
+                    id="mic"
+                    type="button"
+                    class="control-btn"
+                    title="Microphone"
+                >
+                    🎤
+                </button>
+
+                <button
+                    id="camera"
+                    type="button"
+                    class="control-btn"
+                    title="Camera"
+                >
+                    📷
+                </button>
+
+                <button
+                    id="next"
+                    type="button"
+                    class="next-btn"
+                >
+                    <span>Next</span>
+                    <span>→</span>
+                </button>
+
+                <button
+                    id="report"
+                    type="button"
+                    class="control-btn report-btn"
+                    title="Report"
+                >
+                    🚩
+                </button>
+
+            </div>
+
+        </section>
+
+
+        <!-- CHAT PANEL -->
+        <aside class="chat-panel">
+
+            <div class="chat-header">
+
+                <div>
+                    <strong>
+                        Conversation
+                    </strong>
+
+                    <span>
+                        Say hello 👋
+                    </span>
+                </div>
+
+                <div class="chat-online">
+                    <span></span>
+                    Live
+                </div>
+
+            </div>
+
+
+            <div id="messages"></div>
+
+
+            <form id="messageForm">
+
+                <input
+                    id="message"
+                    placeholder="Type a message..."
+                    autocomplete="off"
+                >
+
+                <button
+                    type="submit"
+                    aria-label="Send message"
+                >
+                    ➤
+                </button>
+
+            </form>
+
+        </aside>
+
+    </main>
+
+
+    <script src="app.js"></script>
 
 </body>
 </html>
