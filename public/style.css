@@ -1270,3 +1270,14 @@ footer {
     font-size: 10px;
   }
 }
+
+/* Hide "Finding someone..." when a stranger is connected */
+.video-card:has(#remoteVideo[src]),
+.video-card:has(#remoteVideo:not([src])) {
+}
+
+/* The placeholder is hidden once the remote video starts playing */
+.video-card.connected .video-placeholder {
+    display: none;
+}
+
