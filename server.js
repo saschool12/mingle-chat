@@ -5,6 +5,8 @@ const WebSocket = require("ws");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const cors = require("cors");
+const crypto = require("crypto");
+const nodemailer = require("nodemailer");
 const { createClient } = require("@supabase/supabase-js");
 
 const app = express();
@@ -25,7 +27,7 @@ if (!process.env.SUPABASE_URL) {
 }
 
 if (!process.env.SUPABASE_SECRET_KEY) {
-    console.error("ERROR: SUPABASE_ANON_KEY is missing.");
+    console.error("ERROR: SUPABASE_SECRET_KEY is missing.");
     process.exit(1);
 }
 
@@ -34,9 +36,98 @@ const supabase = createClient(
     process.env.SUPABASE_SECRET_KEY
 );
 
+const mailer = nodemailer.createTransport({
+    host: process.env.SMTP_HOST || "smtp.gmail.com",
+    port: Number(process.env.SMTP_PORT || 465),
+    secure: String(process.env.SMTP_SECURE || "true") === "true",
+    auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS
+    }
+});
+
+function makeVerificationCode() {
+    return String(
+        crypto.randomInt(100000, 1000000)
+    );
+}
+
+async function sendVerificationEmail(
+    email,
+    username,
+    code
+) {
+    if (
+        !process.env.SMTP_USER ||
+        !process.env.SMTP_PASS
+    ) {
+        throw new Error(
+            "SMTP_USER and SMTP_PASS are required."
+        );
+    }
+
+    await mailer.sendMail({
+        from:
+            process.env.SMTP_FROM ||
+            `John Mingle <${process.env.SMTP_USER}>`,
+
+        to: email,
+
+        subject:
+            "Your John Mingle verification code",
+
+        text:
+            `Hi ${username},\n\n` +
+            `Your verification code is: ${code}\n\n` +
+            `This code expires in 10 minutes.`,
+
+        html: `
+            <div style="
+                font-family:Arial;
+                max-width:520px;
+                margin:auto;
+                padding:30px
+            ">
+                <h2>
+                    Welcome to John Mingle 👋
+                </h2>
+
+                <p>
+                    Your verification code is:
+                </p>
+
+                <div style="
+                    font-size:32px;
+                    font-weight:bold;
+                    letter-spacing:8px;
+                    padding:20px 0
+                ">
+                    ${code}
+                </div>
+
+                <p>
+                    This code expires in
+                    <b>10 minutes</b>.
+                </p>
+
+                <p>
+                    If you did not create this
+                    account, ignore this email.
+                </p>
+            </div>
+        `
+    });
+}
+
 app.use(cors());
+
 app.use(express.json());
-app.use(express.static(path.join(__dirname, "public")));
+
+app.use(
+    express.static(
+        path.join(__dirname, "public")
+    )
+);
 
 /* =========================
    SIGN UP
@@ -45,74 +136,179 @@ app.use(express.static(path.join(__dirname, "public")));
 app.post("/api/signup", async (req, res) => {
     try {
         const username =
-            String(req.body.username || "").trim();
+            String(
+                req.body.username || ""
+            ).trim();
+
+        const email =
+            String(
+                req.body.email || ""
+            ).trim().toLowerCase();
 
         const password =
-            String(req.body.password || "");
+            String(
+                req.body.password || ""
+            );
 
-        if (username.length < 3 || username.length > 20) {
+        if (
+            username.length < 3 ||
+            username.length > 20
+        ) {
             return res.status(400).json({
-                error: "Username must be 3-20 characters."
+                error:
+                    "Username must be 3-20 characters."
+            });
+        }
+
+        if (
+            !/^[^\s@]+@gmail\.com$/i.test(
+                email
+            )
+        ) {
+            return res.status(400).json({
+                error:
+                    "Please use a valid Gmail address."
             });
         }
 
         if (password.length < 6) {
             return res.status(400).json({
-                error: "Password must be at least 6 characters."
+                error:
+                    "Password must be at least 6 characters."
             });
         }
 
-        const { data: existing, error: findError } =
-            await supabase
-                .from("users")
-                .select("id")
-                .ilike("username", username)
-                .maybeSingle();
+        const {
+            data: existingUsername,
+            error: usernameError
+        } = await supabase
+            .from("users")
+            .select("id")
+            .ilike("username", username)
+            .maybeSingle();
 
-        if (findError) {
-            console.error(findError);
+        if (usernameError) {
+            console.error(usernameError);
 
             return res.status(500).json({
                 error: "Database error."
             });
         }
 
-        if (existing) {
+        if (existingUsername) {
             return res.status(409).json({
-                error: "Username already exists."
+                error:
+                    "Username already exists."
+            });
+        }
+
+        const {
+            data: existingEmail,
+            error: emailError
+        } = await supabase
+            .from("users")
+            .select(
+                "id,email,email_verified"
+            )
+            .ilike("email", email)
+            .maybeSingle();
+
+        if (emailError) {
+            console.error(emailError);
+
+            return res.status(500).json({
+                error: "Database error."
+            });
+        }
+
+        if (existingEmail) {
+            return res.status(409).json({
+                error:
+                    existingEmail.email_verified
+                        ? "That Gmail is already registered."
+                        : "That Gmail is registered but not verified."
             });
         }
 
         const passwordHash =
-            await bcrypt.hash(password, 12);
+            await bcrypt.hash(
+                password,
+                12
+            );
 
-        const { error: insertError } =
+        const code =
+            makeVerificationCode();
+
+        const expires =
+            new Date(
+                Date.now() +
+                10 * 60 * 1000
+            ).toISOString();
+
+        const {
+            data: createdUser,
+            error: insertError
+        } = await supabase
+            .from("users")
+            .insert({
+                username,
+                email,
+                password_hash:
+                    passwordHash,
+                email_verified:
+                    false,
+                verification_code:
+                    code,
+                verification_expires:
+                    expires
+            })
+            .select(
+                "id,username,email"
+            )
+            .single();
+
+        if (insertError) {
+            console.error(
+                "SUPABASE INSERT ERROR:",
+                insertError
+            );
+
+            return res.status(500).json({
+                error:
+                    insertError.message
+            });
+        }
+
+        try {
+            await sendVerificationEmail(
+                email,
+                username,
+                code
+            );
+        } catch (mailError) {
+            console.error(
+                "EMAIL ERROR:",
+                mailError
+            );
+
             await supabase
                 .from("users")
-                .insert({
-                    username: username,
-                    password_hash: passwordHash
-                });
+                .delete()
+                .eq(
+                    "id",
+                    createdUser.id
+                );
 
-       if (insertError) {
-    console.error("SUPABASE INSERT ERROR:", insertError);
-
-    return res.status(500).json({
-        error: insertError.message
-    });
-}
-
-        const token =
-            jwt.sign(
-                { username },
-                JWT_SECRET,
-                { expiresIn: "7d" }
-            );
+            return res.status(500).json({
+                error:
+                    "Could not send verification email."
+            });
+        }
 
         return res.json({
             success: true,
-            token,
-            username
+            requiresVerification: true,
+            email
         });
 
     } catch (error) {
@@ -125,35 +321,313 @@ app.post("/api/signup", async (req, res) => {
 });
 
 /* =========================
+   VERIFY EMAIL
+========================= */
+
+app.post(
+    "/api/verify-email",
+    async (req, res) => {
+        try {
+            const email =
+                String(
+                    req.body.email || ""
+                )
+                .trim()
+                .toLowerCase();
+
+            const code =
+                String(
+                    req.body.code || ""
+                ).trim();
+
+            if (
+                !email ||
+                !/^\d{6}$/.test(code)
+            ) {
+                return res.status(400).json({
+                    error:
+                        "Enter the 6-digit verification code."
+                });
+            }
+
+            const {
+                data: user,
+                error
+            } = await supabase
+                .from("users")
+                .select(
+                    "id,username,email,verification_code,verification_expires,email_verified"
+                )
+                .ilike(
+                    "email",
+                    email
+                )
+                .maybeSingle();
+
+            if (error) {
+                console.error(error);
+
+                return res.status(500).json({
+                    error:
+                        "Database error."
+                });
+            }
+
+            if (!user) {
+                return res.status(404).json({
+                    error:
+                        "Account not found."
+                });
+            }
+
+            if (user.email_verified) {
+                return res.status(400).json({
+                    error:
+                        "Email is already verified."
+                });
+            }
+
+            if (
+                user.verification_code !==
+                code
+            ) {
+                return res.status(400).json({
+                    error:
+                        "Incorrect verification code."
+                });
+            }
+
+            if (
+                !user.verification_expires ||
+                new Date(
+                    user.verification_expires
+                ).getTime() < Date.now()
+            ) {
+                return res.status(400).json({
+                    error:
+                        "Code expired. Request a new one."
+                });
+            }
+
+            const {
+                error: updateError
+            } = await supabase
+                .from("users")
+                .update({
+                    email_verified:
+                        true,
+                    verification_code:
+                        null,
+                    verification_expires:
+                        null
+                })
+                .eq(
+                    "id",
+                    user.id
+                );
+
+            if (updateError) {
+                console.error(
+                    updateError
+                );
+
+                return res.status(500).json({
+                    error:
+                        "Could not verify email."
+                });
+            }
+
+            const token =
+                jwt.sign(
+                    {
+                        username:
+                            user.username
+                    },
+                    JWT_SECRET,
+                    {
+                        expiresIn:
+                            "7d"
+                    }
+                );
+
+            return res.json({
+                success: true,
+                token,
+                username:
+                    user.username
+            });
+
+        } catch (error) {
+            console.error(error);
+
+            return res.status(500).json({
+                error:
+                    "Server error."
+            });
+        }
+    }
+);
+
+/* =========================
+   RESEND CODE
+========================= */
+
+app.post(
+    "/api/resend-verification",
+    async (req, res) => {
+        try {
+            const email =
+                String(
+                    req.body.email || ""
+                )
+                .trim()
+                .toLowerCase();
+
+            if (!email) {
+                return res.status(400).json({
+                    error:
+                        "Enter your Gmail address."
+                });
+            }
+
+            const {
+                data: user,
+                error
+            } = await supabase
+                .from("users")
+                .select(
+                    "id,username,email,email_verified"
+                )
+                .ilike(
+                    "email",
+                    email
+                )
+                .maybeSingle();
+
+            if (error) {
+                console.error(error);
+
+                return res.status(500).json({
+                    error:
+                        "Database error."
+                });
+            }
+
+            if (!user) {
+                return res.status(404).json({
+                    error:
+                        "No account found."
+                });
+            }
+
+            if (user.email_verified) {
+                return res.status(400).json({
+                    error:
+                        "Email already verified."
+                });
+            }
+
+            const code =
+                makeVerificationCode();
+
+            const expires =
+                new Date(
+                    Date.now() +
+                    10 * 60 * 1000
+                ).toISOString();
+
+            const {
+                error: updateError
+            } = await supabase
+                .from("users")
+                .update({
+                    verification_code:
+                        code,
+                    verification_expires:
+                        expires
+                })
+                .eq(
+                    "id",
+                    user.id
+                );
+
+            if (updateError) {
+                console.error(
+                    updateError
+                );
+
+                return res.status(500).json({
+                    error:
+                        "Could not create code."
+                });
+            }
+
+            await sendVerificationEmail(
+                user.email,
+                user.username,
+                code
+            );
+
+            return res.json({
+                success: true,
+                message:
+                    "New verification code sent."
+            });
+
+        } catch (error) {
+            console.error(error);
+
+            return res.status(500).json({
+                error:
+                    "Could not send email."
+            });
+        }
+    }
+);
+
+/* =========================
    LOGIN
 ========================= */
 
 app.post("/api/login", async (req, res) => {
     try {
         const username =
-            String(req.body.username || "").trim();
+            String(
+                req.body.username || ""
+            ).trim();
 
         const password =
-            String(req.body.password || "");
+            String(
+                req.body.password || ""
+            );
 
-        const { data: user, error } =
-            await supabase
-                .from("users")
-                .select("username,password_hash")
-                .ilike("username", username)
-                .maybeSingle();
+        const {
+            data: user,
+            error
+        } = await supabase
+            .from("users")
+            .select(
+                "username,email,password_hash,email_verified"
+            )
+            .ilike(
+                "username",
+                username
+            )
+            .maybeSingle();
 
         if (error) {
             console.error(error);
 
             return res.status(500).json({
-                error: "Database error."
+                error:
+                    "Database error."
             });
         }
 
         if (!user) {
             return res.status(401).json({
-                error: "Invalid username or password."
+                error:
+                    "Invalid username or password."
             });
         }
 
@@ -165,28 +639,48 @@ app.post("/api/login", async (req, res) => {
 
         if (!valid) {
             return res.status(401).json({
-                error: "Invalid username or password."
+                error:
+                    "Invalid username or password."
+            });
+        }
+
+        if (!user.email_verified) {
+            return res.status(403).json({
+                error:
+                    "Please verify your Gmail first.",
+                requiresVerification:
+                    true,
+                email:
+                    user.email
             });
         }
 
         const token =
             jwt.sign(
-                { username: user.username },
+                {
+                    username:
+                        user.username
+                },
                 JWT_SECRET,
-                { expiresIn: "7d" }
+                {
+                    expiresIn:
+                        "7d"
+                }
             );
 
         return res.json({
             success: true,
             token,
-            username: user.username
+            username:
+                user.username
         });
 
     } catch (error) {
         console.error(error);
 
         return res.status(500).json({
-            error: "Server error."
+            error:
+                "Server error."
         });
     }
 });
@@ -201,23 +695,30 @@ const clients = new Set();
 function send(ws, data) {
     if (
         ws &&
-        ws.readyState === WebSocket.OPEN
+        ws.readyState ===
+        WebSocket.OPEN
     ) {
-        ws.send(JSON.stringify(data));
+        ws.send(
+            JSON.stringify(data)
+        );
     }
 }
 
 function removeWaiting(ws) {
-    const index = waiting.indexOf(ws);
+    const index =
+        waiting.indexOf(ws);
 
     if (index !== -1) {
-        waiting.splice(index, 1);
+        waiting.splice(
+            index,
+            1
+        );
     }
 }
 
 function leavePartner(ws) {
-
-    const partner = ws.partner;
+    const partner =
+        ws.partner;
 
     if (!partner) return;
 
@@ -225,37 +726,52 @@ function leavePartner(ws) {
     partner.partner = null;
 
     send(partner, {
-        type: "partner_left"
+        type:
+            "partner_left"
     });
 }
 
 function findPartner(ws) {
-
     removeWaiting(ws);
 
-    while (waiting.length > 0) {
-
-        const other = waiting.shift();
+    while (
+        waiting.length > 0
+    ) {
+        const other =
+            waiting.shift();
 
         if (
             other !== ws &&
-            other.readyState === WebSocket.OPEN &&
+            other.readyState ===
+                WebSocket.OPEN &&
             !other.partner
         ) {
+            ws.partner =
+                other;
 
-            ws.partner = other;
-            other.partner = ws;
+            other.partner =
+                ws;
 
             send(ws, {
-                type: "matched",
-                partner: other.username,
-                initiator: true
+                type:
+                    "matched",
+
+                partner:
+                    other.username,
+
+                initiator:
+                    true
             });
 
             send(other, {
-                type: "matched",
-                partner: ws.username,
-                initiator: false
+                type:
+                    "matched",
+
+                partner:
+                    ws.username,
+
+                initiator:
+                    false
             });
 
             console.log(
@@ -269,167 +785,243 @@ function findPartner(ws) {
     waiting.push(ws);
 
     send(ws, {
-        type: "waiting"
+        type:
+            "waiting"
     });
 }
 
-wss.on("connection", (ws, req) => {
-
-    try {
-
-        const url =
-            new URL(
-                req.url,
-                "http://localhost"
-            );
-
-        const token =
-            url.searchParams.get("token");
-
-        if (!token) {
-            ws.close();
-            return;
-        }
-
-        const decoded =
-            jwt.verify(
-                token,
-                JWT_SECRET
-            );
-
-        ws.username =
-            decoded.username;
-
-        ws.partner = null;
-
-        clients.add(ws);
-
-        send(ws, {
-            type: "connected",
-            username: ws.username
-        });
-
-    } catch (error) {
-
-        console.log(
-            "WebSocket authentication failed."
-        );
-
-        ws.close();
-
-        return;
-    }
-
-    ws.on("message", raw => {
-
-        let data;
-
+wss.on(
+    "connection",
+    (ws, req) => {
         try {
-            data =
-                JSON.parse(
-                    raw.toString()
+            const url =
+                new URL(
+                    req.url,
+                    "http://localhost"
                 );
-        } catch {
-            return;
-        }
 
-        if (data.type === "find") {
+            const token =
+                url.searchParams.get(
+                    "token"
+                );
 
-            leavePartner(ws);
-            findPartner(ws);
+            if (!token) {
+                ws.close();
+                return;
+            }
 
-            return;
-        }
+            const decoded =
+                jwt.verify(
+                    token,
+                    JWT_SECRET
+                );
 
-        if (data.type === "next") {
+            ws.username =
+                decoded.username;
 
-            leavePartner(ws);
-            findPartner(ws);
+            ws.partner = null;
 
-            return;
-        }
-
-        if (data.type === "chat") {
-
-            if (!ws.partner) return;
-
-            const message =
-                String(
-                    data.message || ""
-                ).slice(0, 1000);
-
-            if (!message.trim()) return;
-
-            send(ws.partner, {
-                type: "chat",
-                username: ws.username,
-                message
-            });
-
-            return;
-        }
-
-        if (data.type === "signal") {
-
-            if (!ws.partner) return;
-
-            send(ws.partner, {
-                type: "signal",
-                signal: data.signal
-            });
-
-            return;
-        }
-
-        if (data.type === "report") {
-
-            console.log(
-                `REPORT: ${ws.username} reported ${ws.partner?.username || "unknown"}`
-            );
+            clients.add(ws);
 
             send(ws, {
-                type: "reported"
+                type:
+                    "connected",
+
+                username:
+                    ws.username
             });
+
+        } catch (error) {
+            console.log(
+                "WebSocket authentication failed."
+            );
+
+            ws.close();
 
             return;
         }
-    });
 
-    ws.on("close", () => {
+        ws.on(
+            "message",
+            raw => {
+                let data;
 
-        removeWaiting(ws);
-        leavePartner(ws);
+                try {
+                    data =
+                        JSON.parse(
+                            raw.toString()
+                        );
+                } catch {
+                    return;
+                }
 
-        clients.delete(ws);
+                if (
+                    data.type ===
+                    "find"
+                ) {
+                    leavePartner(
+                        ws
+                    );
 
-        console.log(
-            `${ws.username} disconnected`
+                    findPartner(
+                        ws
+                    );
+
+                    return;
+                }
+
+                if (
+                    data.type ===
+                    "next"
+                ) {
+                    leavePartner(
+                        ws
+                    );
+
+                    findPartner(
+                        ws
+                    );
+
+                    return;
+                }
+
+                if (
+                    data.type ===
+                    "chat"
+                ) {
+                    if (
+                        !ws.partner
+                    ) return;
+
+                    const message =
+                        String(
+                            data.message ||
+                            ""
+                        ).slice(
+                            0,
+                            1000
+                        );
+
+                    if (
+                        !message.trim()
+                    ) return;
+
+                    send(
+                        ws.partner,
+                        {
+                            type:
+                                "chat",
+
+                            username:
+                                ws.username,
+
+                            message
+                        }
+                    );
+
+                    return;
+                }
+
+                if (
+                    data.type ===
+                    "signal"
+                ) {
+                    if (
+                        !ws.partner
+                    ) return;
+
+                    send(
+                        ws.partner,
+                        {
+                            type:
+                                "signal",
+
+                            signal:
+                                data.signal
+                        }
+                    );
+
+                    return;
+                }
+
+                if (
+                    data.type ===
+                    "report"
+                ) {
+                    console.log(
+                        `REPORT: ${ws.username} reported ${ws.partner?.username || "unknown"}`
+                    );
+
+                    send(ws, {
+                        type:
+                            "reported"
+                    });
+
+                    return;
+                }
+            }
         );
-    });
-});
+
+        ws.on(
+            "close",
+            () => {
+                removeWaiting(
+                    ws
+                );
+
+                leavePartner(
+                    ws
+                );
+
+                clients.delete(
+                    ws
+                );
+
+                console.log(
+                    `${ws.username} disconnected`
+                );
+            }
+        );
+    }
+);
 
 /* =========================
    HEALTH
 ========================= */
 
-app.get("/api/health", (req, res) => {
+app.get(
+    "/api/health",
+    (req, res) => {
+        res.json({
+            online:
+                true,
 
-    res.json({
-        online: true,
-        users: clients.size
-    });
-});
+            users:
+                clients.size
+        });
+    }
+);
 
 /* =========================
    SERVER
 ========================= */
 
-
-server.listen(PORT, () => {
-    console.log("");
-    console.log("================================");
-    console.log(" MINGLE SERVER");
-    console.log("================================");
-    console.log(`Running on port ${PORT}`);
-    console.log("");
-});
+server.listen(
+    PORT,
+    () => {
+        console.log("");
+        console.log(
+            "================================"
+        );
+        console.log(
+            " MINGLE SERVER"
+        );
+        console.log(
+            "================================"
+        );
+        console.log(
+            `Running on port ${PORT}`
+        );
+        console.log("");
+    }
+);

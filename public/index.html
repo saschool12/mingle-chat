@@ -10,152 +10,181 @@
 
 <body class="landing-page">
 
-  <nav class="navbar">
-    <a href="/" class="brand">
-      <span class="brand-icon">J</span>
-      <span>John <b>Mingle</b></span>
-    </a>
+<nav class="navbar">
+  <a href="/" class="brand">
+    <span class="brand-icon">J</span>
+    <span>John <b>Mingle</b></span>
+  </a>
+  <div class="nav-status">
+    <span class="status-dot"></span>
+    <span>Online now</span>
+  </div>
+</nav>
 
-    <div class="nav-status">
-      <span class="status-dot"></span>
-      <span id="onlineCount">Online now</span>
+<main class="landing-container">
+
+<section class="hero">
+  <div class="hero-badge">✨ Random conversations. Real people.</div>
+
+  <h1>Meet someone <span>new.</span></h1>
+
+  <p>
+    Talk, laugh, and make new connections with people around the world.
+    Your next conversation is only one click away.
+  </p>
+
+  <div class="hero-actions">
+    <button class="primary-btn" onclick="showAuth('signup')">
+      Start Mingling <span>→</span>
+    </button>
+
+    <button class="secondary-btn" onclick="showAuth('login')">
+      I already have an account
+    </button>
+  </div>
+
+  <div class="features">
+    <div class="feature">
+      <div class="feature-icon">🎥</div>
+      <div>
+        <strong>Live Video</strong>
+        <small>1-on-1 conversations</small>
+      </div>
     </div>
-  </nav>
 
-  <main class="landing-container">
-
-    <section class="hero">
-      <div class="hero-badge">
-        ✨ Random conversations. Real people.
+    <div class="feature">
+      <div class="feature-icon">💬</div>
+      <div>
+        <strong>Instant Chat</strong>
+        <small>Talk in real time</small>
       </div>
+    </div>
 
-      <h1>
-        Meet someone
-        <span>new.</span>
-      </h1>
+    <div class="feature">
+      <div class="feature-icon">🌎</div>
+      <div>
+        <strong>Meet People</strong>
+        <small>From anywhere</small>
+      </div>
+    </div>
+  </div>
+</section>
 
+<section class="auth-card" id="authCard">
+
+  <div class="auth-header">
+    <div class="auth-logo">J</div>
+    <h2 id="authTitle">Create your account</h2>
+    <p id="authSubtitle">Join John Mingle and start meeting people.</p>
+  </div>
+
+  <div class="auth-tabs">
+    <button id="signupTab" class="active" onclick="showAuth('signup')">
+      Sign up
+    </button>
+    <button id="loginTab" onclick="showAuth('login')">
+      Log in
+    </button>
+  </div>
+
+  <form id="authForm">
+
+    <div id="usernameGroup" class="input-group">
+      <label>Username</label>
+      <input id="username" type="text"
+        placeholder="Choose a username"
+        autocomplete="username">
+    </div>
+
+    <div id="emailGroup" class="input-group">
+      <label>Gmail address</label>
+      <input id="email" type="email"
+        placeholder="yourname@gmail.com"
+        autocomplete="email">
+    </div>
+
+    <div class="input-group">
+      <label>Password</label>
+      <input id="password" type="password"
+        placeholder="Enter your password"
+        autocomplete="current-password"
+        required>
+    </div>
+
+    <div id="confirmGroup" class="input-group">
+      <label>Confirm password</label>
+      <input id="confirmPassword" type="password"
+        placeholder="Repeat your password"
+        autocomplete="new-password">
+    </div>
+
+    <div id="authMessage" class="auth-message"></div>
+
+    <button type="submit" class="auth-submit" id="authSubmit">
+      Create account
+    </button>
+  </form>
+
+  <div id="verificationBox" style="display:none;">
+    <div class="auth-message">
+      Please verify your Gmail first.
+    </div>
+
+    <hr>
+
+    <div class="auth-header">
+      <h2>Verify your Gmail</h2>
       <p>
-        Talk, laugh, and make new connections with people around the world.
-        Your next conversation is only one click away.
+        We sent a 6-digit code to
+        <strong id="verificationEmail"></strong>.
       </p>
+    </div>
 
-      <div class="hero-actions">
-        <button class="primary-btn" onclick="showAuth('signup')">
-          Start Mingling
-          <span>→</span>
-        </button>
+    <div class="input-group">
+      <label>Verification code</label>
+      <input id="verificationCode"
+        type="text"
+        inputmode="numeric"
+        maxlength="6"
+        placeholder="000000"
+        autocomplete="one-time-code">
+    </div>
 
-        <button class="secondary-btn" onclick="showAuth('login')">
-          I already have an account
-        </button>
-      </div>
+    <div style="display:flex;gap:10px;">
+      <button class="auth-submit" id="verifyButton" type="button">
+        Verify Gmail
+      </button>
 
-      <div class="features">
-        <div class="feature">
-          <div class="feature-icon">🎥</div>
-          <div>
-            <strong>Live Video</strong>
-            <small>1-on-1 conversations</small>
-          </div>
-        </div>
+      <button class="secondary-btn" id="resendButton" type="button">
+        Resend
+      </button>
+    </div>
 
-        <div class="feature">
-          <div class="feature-icon">💬</div>
-          <div>
-            <strong>Instant Chat</strong>
-            <small>Talk in real time</small>
-          </div>
-        </div>
+    <div id="verificationMessage" class="auth-message"></div>
+  </div>
 
-        <div class="feature">
-          <div class="feature-icon">🌎</div>
-          <div>
-            <strong>Meet People</strong>
-            <small>From anywhere</small>
-          </div>
-        </div>
-      </div>
-    </section>
+  <p class="auth-footer">
+    By continuing, you agree to use John Mingle respectfully.
+  </p>
 
-    <section class="auth-card" id="authCard">
+</section>
+</main>
 
-      <div class="auth-header">
-        <div class="auth-logo">J</div>
-        <h2 id="authTitle">Create your account</h2>
-        <p id="authSubtitle">Join John Mingle and start meeting people.</p>
-      </div>
-
-      <div class="auth-tabs">
-        <button id="signupTab" class="active" onclick="showAuth('signup')">
-          Sign up
-        </button>
-
-        <button id="loginTab" onclick="showAuth('login')">
-          Log in
-        </button>
-      </div>
-
-      <form id="authForm">
-
-        <div id="usernameGroup" class="input-group">
-          <label>Username</label>
-          <input
-            id="username"
-            type="text"
-            placeholder="Choose a username"
-            autocomplete="username"
-          >
-        </div>
-
-        <div class="input-group">
-          <label>Password</label>
-          <input
-            id="password"
-            type="password"
-            placeholder="Enter your password"
-            autocomplete="current-password"
-            required
-          >
-        </div>
-
-        <div id="confirmGroup" class="input-group">
-          <label>Confirm password</label>
-          <input
-            id="confirmPassword"
-            type="password"
-            placeholder="Repeat your password"
-            autocomplete="new-password"
-          >
-        </div>
-
-        <div id="authMessage" class="auth-message"></div>
-
-        <button type="submit" class="auth-submit" id="authSubmit">
-          Create account
-        </button>
-
-      </form>
-
-      <p class="auth-footer">
-        By continuing, you agree to use John Mingle respectfully.
-      </p>
-
-    </section>
-
-  </main>
-
-  <footer>
-    <span>© 2026 John Mingle</span>
-    <span>Connect • Chat • Mingle</span>
-  </footer>
+<footer>
+  <span>© 2026 John Mingle</span>
+  <span>Connect • Chat • Mingle</span>
+</footer>
 
 <script>
 let mode = "signup";
+let verificationEmailValue = "";
 
 const authForm = document.getElementById("authForm");
 const usernameGroup = document.getElementById("usernameGroup");
+const emailGroup = document.getElementById("emailGroup");
 const confirmGroup = document.getElementById("confirmGroup");
 const username = document.getElementById("username");
+const email = document.getElementById("email");
 const password = document.getElementById("password");
 const confirmPassword = document.getElementById("confirmPassword");
 const authMessage = document.getElementById("authMessage");
@@ -164,19 +193,21 @@ const authTitle = document.getElementById("authTitle");
 const authSubtitle = document.getElementById("authSubtitle");
 const signupTab = document.getElementById("signupTab");
 const loginTab = document.getElementById("loginTab");
+const verificationBox = document.getElementById("verificationBox");
+const verificationEmail = document.getElementById("verificationEmail");
+const verificationCode = document.getElementById("verificationCode");
+const verificationMessage = document.getElementById("verificationMessage");
+const verifyButton = document.getElementById("verifyButton");
+const resendButton = document.getElementById("resendButton");
 
 function showAuth(type) {
   mode = type;
-
-  document.getElementById("authCard").scrollIntoView({
-    behavior: "smooth",
-    block: "center"
-  });
-
+  verificationBox.style.display = "none";
+  authForm.style.display = "block";
   authMessage.textContent = "";
 
   if (type === "login") {
-    usernameGroup.style.display = "block";
+    emailGroup.style.display = "none";
     confirmGroup.style.display = "none";
 
     authTitle.textContent = "Welcome back";
@@ -185,10 +216,9 @@ function showAuth(type) {
 
     signupTab.classList.remove("active");
     loginTab.classList.add("active");
-
     username.placeholder = "Your username";
   } else {
-    usernameGroup.style.display = "block";
+    emailGroup.style.display = "block";
     confirmGroup.style.display = "block";
 
     authTitle.textContent = "Create your account";
@@ -197,7 +227,6 @@ function showAuth(type) {
 
     loginTab.classList.remove("active");
     signupTab.classList.add("active");
-
     username.placeholder = "Choose a username";
   }
 }
@@ -213,30 +242,54 @@ authForm.addEventListener("submit", async (event) => {
     return;
   }
 
-  if (mode === "signup" && pass !== confirmPassword.value) {
-    authMessage.textContent = "Passwords do not match.";
-    return;
+  if (mode === "signup") {
+    const mail = email.value.trim().toLowerCase();
+
+    if (!mail.endsWith("@gmail.com")) {
+      authMessage.textContent = "Please use a Gmail address.";
+      return;
+    }
+
+    if (pass !== confirmPassword.value) {
+      authMessage.textContent = "Passwords do not match.";
+      return;
+    }
   }
 
   authSubmit.disabled = true;
-  authSubmit.textContent = mode === "login" ? "Logging in..." : "Creating account...";
+  authSubmit.textContent =
+    mode === "login" ? "Logging in..." : "Creating account...";
 
   try {
+    const body = {
+      username: user,
+      password: pass
+    };
+
+    if (mode === "signup") {
+      body.email = email.value.trim().toLowerCase();
+    }
+
     const response = await fetch(
       mode === "login" ? "/api/login" : "/api/signup",
       {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          username: user,
-          password: pass
-        })
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify(body)
       }
     );
 
     const data = await response.json();
+
+    if (data.requiresVerification) {
+      verificationEmailValue = data.email || email.value.trim();
+      verificationEmail.textContent = verificationEmailValue;
+      verificationBox.style.display = "block";
+      authMessage.textContent = data.error || "Please verify your Gmail first.";
+      authSubmit.disabled = false;
+      authSubmit.textContent = "Create account";
+      return;
+    }
 
     if (!response.ok) {
       throw new Error(data.error || "Something went wrong.");
@@ -253,6 +306,76 @@ authForm.addEventListener("submit", async (event) => {
     authSubmit.textContent =
       mode === "login" ? "Log in" : "Create account";
   }
+});
+
+verifyButton.addEventListener("click", async () => {
+  const code = verificationCode.value.trim();
+
+  if (!/^\d{6}$/.test(code)) {
+    verificationMessage.textContent = "Enter the 6-digit code.";
+    return;
+  }
+
+  verifyButton.disabled = true;
+  verifyButton.textContent = "Verifying...";
+
+  try {
+    const response = await fetch("/api/verify-email", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({
+        email: verificationEmailValue,
+        code
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Verification failed.");
+    }
+
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("username", data.username);
+
+    window.location.href = "/chat.html";
+
+  } catch (error) {
+    verificationMessage.textContent = error.message;
+    verifyButton.disabled = false;
+    verifyButton.textContent = "Verify Gmail";
+  }
+});
+
+resendButton.addEventListener("click", async () => {
+  resendButton.disabled = true;
+  resendButton.textContent = "Sending...";
+
+  try {
+    const response = await fetch("/api/resend-verification", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: {email: verificationEmailValue}
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Could not resend code.");
+    }
+
+    verificationMessage.textContent = "A new code was sent to your Gmail.";
+  } catch (error) {
+    verificationMessage.textContent = error.message;
+  }
+
+  resendButton.disabled = false;
+  resendButton.textContent = "Resend";
+});
+
+verificationCode.addEventListener("input", () => {
+  verificationCode.value =
+    verificationCode.value.replace(/\D/g, "").slice(0, 6);
 });
 
 showAuth("signup");
