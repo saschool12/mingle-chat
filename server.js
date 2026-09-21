@@ -9,32 +9,40 @@ const crypto = require("crypto");
 const nodemailer = require("nodemailer");
 const { createClient } = require("@supabase/supabase-js");
 
+// Automatically load .env file if present
+if (typeof process.loadEnvFile === "function") {
+    try {
+        process.loadEnvFile();
+    } catch {}
+}
+
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
 const PORT = process.env.PORT || 3000;
-const JWT_SECRET = process.env.JWT_SECRET;
+let JWT_SECRET = process.env.JWT_SECRET;
 
 if (!JWT_SECRET) {
-    console.error("ERROR: JWT_SECRET is missing.");
-    process.exit(1);
+    if (process.env.NODE_ENV === "production") {
+        console.error("ERROR: JWT_SECRET is missing.");
+        process.exit(1);
+    } else {
+        JWT_SECRET = "mingle_dev_jwt_secret_key_98486e16668960dd63f23f30472a94ec";
+        console.warn("⚠️  JWT_SECRET was not provided. Using development secret key.");
+    }
 }
 
-if (!process.env.SUPABASE_URL) {
-    console.error("ERROR: SUPABASE_URL is missing.");
-    process.exit(1);
+let supabase = null;
+if (process.env.SUPABASE_URL && process.env.SUPABASE_SECRET_KEY) {
+    supabase = createClient(
+        process.env.SUPABASE_URL,
+        process.env.SUPABASE_SECRET_KEY
+    );
+} else {
+    console.warn("⚠️  SUPABASE_URL or SUPABASE_SECRET_KEY is not set.");
+    console.warn("   Running in development mode. Set Supabase keys in .env for production database authentication.");
 }
-
-if (!process.env.SUPABASE_SECRET_KEY) {
-    console.error("ERROR: SUPABASE_SECRET_KEY is missing.");
-    process.exit(1);
-}
-
-const supabase = createClient(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_SECRET_KEY
-);
 
 const mailer = nodemailer.createTransport({
     host: process.env.SMTP_HOST || "smtp.gmail.com",
@@ -176,6 +184,11 @@ app.post("/api/signup", async (req, res) => {
                 error:
                     "Password must be at least 6 characters."
             });
+        }
+
+        if (!supabase) {
+            const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: "7d" });
+            return res.json({ token, username, success: true });
         }
 
         const {
@@ -603,6 +616,11 @@ app.post("/api/login", async (req, res) => {
                 req.body.password || ""
             );
 
+        if (!supabase) {
+            const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: "7d" });
+            return res.json({ token, username });
+        }
+
         const {
             data: user,
             error
@@ -693,6 +711,16 @@ app.post("/api/login", async (req, res) => {
 
 const waiting = [];
 const clients = new Set();
+
+function broadcastOnlineCount() {
+    const count = clients.size;
+    for (const client of clients) {
+        send(client, {
+            type: "online_count",
+            count
+        });
+    }
+}
 
 function send(ws, data) {
     if (
@@ -833,6 +861,8 @@ wss.on(
                     ws.username
             });
 
+            broadcastOnlineCount();
+
         } catch (error) {
             console.log(
                 "WebSocket authentication failed."
@@ -948,6 +978,36 @@ wss.on(
 
                 if (
                     data.type ===
+                    "reaction"
+                ) {
+                    if (!ws.partner) return;
+
+                    send(ws.partner, {
+                        type: "reaction",
+                        emoji: String(data.emoji || "🔥").slice(0, 10),
+                        username: ws.username
+                    });
+
+                    return;
+                }
+
+                if (
+                    data.type ===
+                    "typing"
+                ) {
+                    if (!ws.partner) return;
+
+                    send(ws.partner, {
+                        type: "typing",
+                        isTyping: Boolean(data.isTyping),
+                        username: ws.username
+                    });
+
+                    return;
+                }
+
+                if (
+                    data.type ===
                     "report"
                 ) {
                     console.log(
@@ -978,6 +1038,8 @@ wss.on(
                 clients.delete(
                     ws
                 );
+
+                broadcastOnlineCount();
 
                 console.log(
                     `${ws.username} disconnected`

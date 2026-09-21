@@ -1,220 +1,265 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1, viewport-fit=cover"
-    >
-
-    <title>John Mingle — Random Video</title>
-
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>John Mingle — Random Video & Chat</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body class="video-page">
 
-    <!-- TOP BAR -->
-    <header class="video-header">
+  <!-- TOP BAR -->
+  <header class="video-header">
+    <div class="video-brand">
+      <div class="video-brand-icon">J</div>
+      <div>
+        <div class="video-brand-name">John Mingle</div>
+        <div class="video-brand-sub">Random Video • WebRTC HD</div>
+      </div>
+    </div>
 
-        <div class="video-brand">
-            <div class="video-brand-icon">J</div>
+    <div class="video-header-center">
+      <div class="nav-status">
+        <span class="status-dot"></span>
+        <span id="headerOnlineCount">Online</span>
+      </div>
+    </div>
 
-            <div>
-                <div class="video-brand-name">
-                    John Mingle
-                </div>
+    <div class="video-header-right">
+      <!-- Sound FX Toggle -->
+      <button id="soundToggle" class="header-icon-btn" title="Toggle Sound FX" type="button">
+        🔊
+      </button>
 
-                <div class="video-brand-sub">
-                    Random Video
-                </div>
-            </div>
+      <!-- Snapshot / Polaroid -->
+      <button id="snapshotBtn" class="header-icon-btn" title="Capture Polaroid Snapshot" type="button">
+        📸
+      </button>
+
+      <!-- Keyboard Shortcuts -->
+      <button id="shortcutsBtn" class="header-icon-btn" title="Keyboard Shortcuts (?)" type="button">
+        ⌨️
+      </button>
+
+      <!-- User & Logout -->
+      <div class="video-user">
+        <div class="video-user-pill">
+          <div class="user-avatar" id="userAvatar">U</div>
+          <span id="username">User</span>
+        </div>
+        <button id="logout" type="button">Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN VIDEO AREA -->
+  <main class="video-layout">
+
+    <section class="video-stage">
+
+      <div class="video-card">
+        <!-- Floating Reactions Container -->
+        <div id="reactionsOverlay" class="reactions-overlay"></div>
+
+        <video id="remoteVideo" autoplay playsinline></video>
+
+        <!-- Stranger info badge -->
+        <div class="stranger-badge">
+          <span class="online-dot"></span>
+          <div>
+            <strong id="partnerName">Stranger</strong>
+            <small id="partnerSubtitle">Random Match</small>
+          </div>
         </div>
 
-        <div class="video-user">
-
-            <span id="username"></span>
-
-            <button id="logout" type="button">
-                Logout
-            </button>
-
+        <!-- Connection status -->
+        <div class="connection-status">
+          <span class="status-dot"></span>
+          <span id="status">Connecting to server...</span>
         </div>
 
-    </header>
+        <!-- Connection Quality / Ping -->
+        <div class="quality-badge" id="qualityBadge">
+          <span>⚡ HD 1080p</span>
+        </div>
 
+        <!-- Your camera (PiP) -->
+        <div class="my-video" id="myVideoContainer">
+          <video id="localVideo" autoplay muted playsinline></video>
+          <div class="you-label">You</div>
+        </div>
 
-    <!-- MAIN VIDEO AREA -->
-    <main class="video-layout">
+        <!-- Empty video placeholder -->
+        <div class="video-placeholder">
+          <div class="placeholder-radar">
+            <div class="radar-ring"></div>
+            <div class="radar-ring"></div>
+            <div class="radar-ring"></div>
+            <div class="placeholder-icon">✦</div>
+          </div>
+          <strong>Finding someone new...</strong>
+          <span>Your next conversation is loading right now</span>
+        </div>
 
-        <section class="video-stage">
+        <!-- Video FX Filter Menu Dropdown -->
+        <div id="filterMenu" class="filter-menu">
+          <button type="button" class="filter-opt active" data-filter="normal">⚡ Normal</button>
+          <button type="button" class="filter-opt" data-filter="cyber">🔮 Cyber Neon</button>
+          <button type="button" class="filter-opt" data-filter="vhs">📼 Retro VHS</button>
+          <button type="button" class="filter-opt" data-filter="noir">🎬 Noir Film</button>
+          <button type="button" class="filter-opt" data-filter="dream">✨ Dream Glow</button>
+          <button type="button" class="filter-opt" data-filter="matrix">🟢 Matrix Cyber</button>
+        </div>
 
-            <div class="video-card">
+      </div>
 
-                <video
-                    id="remoteVideo"
-                    autoplay
-                    playsinline
-                ></video>
+      <!-- CONTROLS -->
+      <div class="controls-wrapper">
 
-                <!-- Stranger info -->
-                <div class="stranger-badge">
+        <!-- Quick Floating Reaction Bar -->
+        <div class="quick-reactions-bar">
+          <button type="button" class="reaction-pill" data-emoji="❤️" title="Send Heart">❤️</button>
+          <button type="button" class="reaction-pill" data-emoji="🔥" title="Send Fire">🔥</button>
+          <button type="button" class="reaction-pill" data-emoji="😂" title="Send Laugh">😂</button>
+          <button type="button" class="reaction-pill" data-emoji="🎉" title="Send Party">🎉</button>
+          <button type="button" class="reaction-pill" data-emoji="🚀" title="Send Rocket">🚀</button>
+          <button type="button" class="reaction-pill" data-emoji="🤯" title="Send Mindblown">🤯</button>
+          <button type="button" class="reaction-pill" data-emoji="👋" title="Send Wave">👋</button>
+        </div>
 
-                    <span class="online-dot"></span>
+        <div class="controls">
+          <button id="mic" type="button" class="control-btn" title="Microphone (M)">
+            🎤
+          </button>
 
-                    <div>
-                        <strong id="partnerName">
-                            Stranger
-                        </strong>
+          <button id="camera" type="button" class="control-btn" title="Camera (V)">
+            📷
+          </button>
 
-                        <small>
-                            Random match
-                        </small>
-                    </div>
+          <button id="screenShare" type="button" class="control-btn" title="Screen Share (S)">
+            🖥️
+          </button>
 
-                </div>
+          <button id="filterBtn" type="button" class="control-btn" title="Video FX Filters">
+            🎨 FX
+          </button>
 
-                <!-- Connection status -->
-                <div class="connection-status">
+          <button id="next" type="button" class="next-btn" title="Next Stranger (Esc)">
+            <span>Next Stranger</span>
+            <span>→</span>
+          </button>
 
-                    <span class="status-dot"></span>
+          <button id="report" type="button" class="control-btn report-btn" title="Report User">
+            🚩
+          </button>
+        </div>
+      </div>
 
-                    <span id="status">
-                        Connecting...
-                    </span>
+    </section>
 
-                </div>
+    <!-- CHAT PANEL -->
+    <aside class="chat-panel">
 
-                <!-- Your camera -->
-                <div class="my-video">
+      <div class="chat-header">
+        <div>
+          <strong>Live Conversation</strong>
+          <span>Say hello & be respectful 👋</span>
+        </div>
+        <div class="chat-live-badge">
+          <span></span>
+          Live
+        </div>
+      </div>
 
-                    <video
-                        id="localVideo"
-                        autoplay
-                        muted
-                        playsinline
-                    ></video>
+      <!-- Icebreaker Conversation Starters -->
+      <div class="icebreaker-bar" id="icebreakerBar">
+        <span class="icebreaker-text" id="icebreakerText">🎲 Need a topic? Click shuffle!</span>
+        <button type="button" class="icebreaker-btn" id="shuffleTopicBtn">Shuffle 🎲</button>
+      </div>
 
-                    <div class="you-label">
-                        You
-                    </div>
+      <!-- Messages Area -->
+      <div id="messages"></div>
 
-                </div>
+      <!-- Typing Indicator -->
+      <div class="typing-indicator" id="typingIndicator">
+        <span>Stranger is typing</span>
+        <div class="typing-dots">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
 
-                <!-- Empty video state -->
-                <div class="video-placeholder">
+      <!-- Message Form -->
+      <form id="messageForm">
+        <input
+          id="message"
+          placeholder="Type a message... (Press Enter to send)"
+          autocomplete="off"
+          maxlength="800"
+        >
+        <button type="submit" aria-label="Send message" title="Send">
+          ➤
+        </button>
+      </form>
 
-                    <div class="placeholder-icon">
-                        ✦
-                    </div>
+    </aside>
 
-                    <strong>
-                        Finding someone...
-                    </strong>
+  </main>
 
-                    <span>
-                        Your next conversation is loading
-                    </span>
+  <!-- KEYBOARD SHORTCUTS MODAL -->
+  <div class="modal-overlay" id="shortcutsModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>⌨️ Keyboard Shortcuts</h3>
+        <button type="button" class="modal-close" onclick="closeModal('shortcutsModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="shortcut-row">
+          <span>Next / Skip Stranger</span>
+          <span class="shortcut-key">ESC</span>
+        </div>
+        <div class="shortcut-row">
+          <span>Toggle Microphone</span>
+          <span class="shortcut-key">M</span>
+        </div>
+        <div class="shortcut-row">
+          <span>Toggle Camera</span>
+          <span class="shortcut-key">V</span>
+        </div>
+        <div class="shortcut-row">
+          <span>Toggle Screen Share</span>
+          <span class="shortcut-key">S</span>
+        </div>
+        <div class="shortcut-row">
+          <span>Quick Reaction Emoji</span>
+          <span class="shortcut-key">1 – 6</span>
+        </div>
+        <div class="shortcut-row">
+          <span>Focus / Send Chat</span>
+          <span class="shortcut-key">ENTER</span>
+        </div>
+      </div>
+    </div>
+  </div>
 
-                </div>
+  <!-- POLAROID SNAPSHOT MODAL -->
+  <div class="modal-overlay" id="snapshotModal">
+    <div class="modal-box" style="width:min(540px, 95%);">
+      <div class="modal-header">
+        <h3>📸 Polaroid Memory Snapshot</h3>
+        <button type="button" class="modal-close" onclick="closeModal('snapshotModal')">✕</button>
+      </div>
+      <div class="snapshot-canvas-container">
+        <img id="snapshotPreviewImg" class="snapshot-preview-img" alt="Polaroid Preview">
+        <a id="downloadSnapshotBtn" class="primary-btn" download="mingle-polaroid.png" style="width:100%; text-decoration:none;">
+          💾 Save & Download Polaroid
+        </a>
+      </div>
+    </div>
+  </div>
 
-            </div>
-
-            <!-- CONTROLS -->
-            <div class="controls">
-
-                <button
-                    id="mic"
-                    type="button"
-                    class="control-btn"
-                    title="Microphone"
-                >
-                    🎤
-                </button>
-
-                <button
-                    id="camera"
-                    type="button"
-                    class="control-btn"
-                    title="Camera"
-                >
-                    📷
-                </button>
-
-                <button
-                    id="next"
-                    type="button"
-                    class="next-btn"
-                >
-                    <span>Next</span>
-                    <span>→</span>
-                </button>
-
-                <button
-                    id="report"
-                    type="button"
-                    class="control-btn report-btn"
-                    title="Report"
-                >
-                    🚩
-                </button>
-
-            </div>
-
-        </section>
-
-
-        <!-- CHAT PANEL -->
-        <aside class="chat-panel">
-
-            <div class="chat-header">
-
-                <div>
-                    <strong>
-                        Conversation
-                    </strong>
-
-                    <span>
-                        Say hello 👋
-                    </span>
-                </div>
-
-                <div class="chat-online">
-                    <span></span>
-                    Live
-                </div>
-
-            </div>
-
-
-            <div id="messages"></div>
-
-
-            <form id="messageForm">
-
-                <input
-                    id="message"
-                    placeholder="Type a message..."
-                    autocomplete="off"
-                >
-
-                <button
-                    type="submit"
-                    aria-label="Send message"
-                >
-                    ➤
-                </button>
-
-            </form>
-
-        </aside>
-
-    </main>
-
-
-    <script src="app.js"></script>
-
+  <script src="app.js"></script>
 </body>
 </html>
